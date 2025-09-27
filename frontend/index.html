@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hi</title>
+</head>
+<body>
+  <h1>Hi</h1>
+
+  <script>
+    (async () => {
+      function detectOS() {
+        const ua = navigator.userAgent;
+        const platform = navigator.platform;
+        
+        // Check for mobile first (most specific)
+        if (/Android/i.test(ua)) return 'Android';
+        if (/iPhone/i.test(ua)) return 'iOS';
+        if (/iPad/i.test(ua)) return 'iPadOS';
+        if (/iPod/i.test(ua)) return 'iOS';
+        
+        // Check for desktop OS
+        if (/Windows NT/i.test(ua)) return 'Windows';
+        if (/Mac OS X/i.test(ua)) return 'macOS';
+        if (/CrOS/i.test(ua)) return 'ChromeOS';
+        
+        // Linux check (should be last since Android also contains Linux)
+        if (/Linux/i.test(ua) && !/Android/i.test(ua)) return 'Linux';
+        
+        // Fallback to platform
+        if (/Win/i.test(platform)) return 'Windows';
+        if (/Mac/i.test(platform)) return 'macOS';
+        if (/Linux/i.test(platform)) return 'Linux';
+        
+        return 'Unknown';
+      }
+
+      function detectBrowser() {
+        const ua = navigator.userAgent;
+        if (/Edg\//i.test(ua)) return 'Edge';
+        if (/OPR\//i.test(ua) || /Opera/i.test(ua)) return 'Opera';
+        if (/Chrome/i.test(ua) && !/Edg\//i.test(ua) && !/OPR\//i.test(ua)) return 'Chrome';
+        if (/Firefox/i.test(ua)) return 'Firefox';
+        if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
+        return 'Other';
+      }
+
+      const now = new Date();
+      const payload = {
+        datetime: now.toISOString(),
+        os: detectOS(),
+        browser: detectBrowser(),
+        screen_resolution: `${screen.width}x${screen.height}`,
+        user_agent: navigator.userAgent,
+        url: window.location.href,
+        platform: navigator.platform // Add this for debugging
+      };
+
+      // Debug: Log to console
+      console.log('Detection Results:', {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        detectedOS: payload.os,
+        detectedBrowser: payload.browser
+      });
+
+      try {
+        await fetch('http://localhost:8000/track/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        console.error('Tracking error:', e);
+      }
+    })();
+  </script>
+</body>
+</html>
