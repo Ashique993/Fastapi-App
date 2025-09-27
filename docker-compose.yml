@@ -25,15 +25,7 @@ services:
       DB_NAME: mydb
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/mydb
     ports:
-      - "8000:8000"
-
-  frontend:
-    build: ./frontend
-    container_name: frontend_app
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+      - "3000:8000"
 
 volumes:
   pgdata:
