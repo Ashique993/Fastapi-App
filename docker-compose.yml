@@ -27,5 +27,13 @@ services:
     ports:
       - "3000:8000"
 
+  frontend:
+    build: ./frontend
+    container_name: frontend_app
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
 volumes:
   pgdata:
