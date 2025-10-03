@@ -34,16 +34,6 @@ services:
       - "8080:80"
     depends_on:
       - backend
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin_dev
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_dev:/var/lib/pgadmin
       
 volumes:
   pgdata:
