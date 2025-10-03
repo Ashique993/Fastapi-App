@@ -7,10 +7,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: mydb
+      TZ: Asia/Kolkata
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data  # DATABASE PERSISTS HERE
 
   backend:
     build: ./backend
@@ -24,8 +25,14 @@ services:
       DB_PASSWORD: postgres
       DB_NAME: mydb
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/mydb
+      TZ: Asia/Kolkata
     ports:
       - "3000:8000"
+      - "5678:5678"  # For debugging
+    volumes:
+      - ./backend/src:/app  # CODE HOT RELOAD
+      - alembic_versions:/app/alembic/versions  # MIGRATIONS PERSIST
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   frontend:
     build: ./frontend
@@ -34,16 +41,24 @@ services:
       - "8080:80"
     depends_on:
       - backend
+    volumes:
+      - ./frontend/src:/usr/share/nginx/html  # FRONTEND HOT RELOAD
+
   pgadmin:
     image: dpage/pgadmin4
-    container_name: pgadmin_dev
+    container_name: pgadmin_app
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - "5050:80"
+    depends_on:
+      - db
     volumes:
-      - pgadmin_dev:/var/lib/pgadmin
-      
+      - pgadmin_data:/var/lib/pgadmin
+
 volumes:
-  pgdata:
+  pgdata:              # DATABASE DATA PERSISTS
+  alembic_versions:    # MIGRATION FILES PERSIST  
+  pgadmin_data:        # PGADMIN SETTINGS PERSIST
