@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlmodel import Session, select
 from models import UserVisit
 
@@ -17,6 +17,21 @@ def create_visit(
     """
     Create and persist a UserVisit record.
     """
+
+    # Check for recent duplicate visits (within 5 minutes)
+    if ip_address and user_agent:
+        time_dutation = datetime.now() - timedelta(minutes=1)
+        existing_visit = session.exec(
+            select(UserVisit)
+            .where(UserVisit.ip_address == ip_address)
+            .where(UserVisit.user_agent == user_agent)
+            .where(UserVisit.visit_datetime > time_dutation)
+        ).first()
+
+        if existing_visit:
+            # Return existing visit instead of creating duplicate
+            return existing_visit
+
     visit = UserVisit(
         browser=browser,
         os=os,

@@ -1,9 +1,14 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Index
 from datetime import datetime
 from typing import Optional
 
 
 class UserVisit(SQLModel, table=True):
+
+    __table_args__ = (
+        # Add unique constraint to prevent duplicates within 1 minute
+        Index("idx_unique_visit", "ip_address", "user_agent", "visit_datetime"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     visit_datetime: Optional[datetime] = Field(
@@ -23,13 +28,13 @@ class UserVisit(SQLModel, table=True):
     ip_address: Optional[str] = Field(default=None, description="Client IP address")
 
 
-class UserVisit2(SQLModel, table=True):
+# class UserVisit2(SQLModel, table=True):
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+#     id: Optional[int] = Field(default=None, primary_key=True)
 
 
-class UserVisit3(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    os: str = Field(
-        index=True, description="Operating system name (e.g., Android, iOS)"
-    )
+# class UserVisit3(SQLModel, table=True):
+#     id: Optional[int] = Field(default=None, primary_key=True)
+#     os: str = Field(
+#         index=True, description="Operating system name (e.g., Android, iOS)"
+#     )

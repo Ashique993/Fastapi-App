@@ -1,5 +1,6 @@
 // Global variables
 let visitData = {};
+let visitTracked = false;
 const API_BASE = 'http://localhost:3000/api';
 
 // Function to detect detailed browser information
@@ -138,66 +139,37 @@ async function sendToBackend(data) {
 // Function to load recent visits
 async function loadRecentVisits() {
     const container = document.getElementById('visits-container');
-    
     try {
-        container.innerHTML = `
-            <div class="status loading">
-                <div class="loader"></div>
-                <span>Loading recent visits...</span>
-            </div>
-        `;
-        
-        const response = await fetch(`${API_BASE}/visits?limit=10`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
-        
-        if (result.visits && result.visits.length > 0) {
-            const tableHTML = `
-                <table class="visits-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Timestamp</th>
-                            <th>Browser</th>
-                            <th>OS</th>
-                            <th>Screen Resolution</th>
-                            <th>IP Address</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${result.visits.map(visit => `
-                            <tr>
-                                <td>${visit.id}</td>
-                                <td>${new Date(visit.timestamp).toLocaleString()}</td>
-                                <td>${visit.browser}</td>
-                                <td>${visit.os}</td>
-                                <td>${visit.screen_resolution || 'N/A'}</td>
-                                <td>${visit.ip_address}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            container.innerHTML = tableHTML;
+        const response = await fetch(`${API_BASE}/visits`);
+        if (!response.ok) throw new Error("API request failed");
+        const data = await response.json();
+        if (data.visits && data.visits.length > 0) {
+            container.innerHTML =
+              `<table>
+                <thead>
+                  <tr>
+                    <th>ID</th><th>Timestamp</th><th>Browser</th>
+                    <th>OS</th><th>Screen</th><th>IP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.visits.map(v => `<tr>
+                    <td>${v.id}</td>
+                    <td>${new Date(v.timestamp).toLocaleString()}</td>
+                    <td>${v.browser}</td>
+                    <td>${v.os}</td>
+                    <td>${v.screen_resolution || "N/A"}</td>
+                    <td>${v.ip_address}</td>
+                  </tr>`).join("")}
+                </tbody>
+              </table>`;
         } else {
-            container.innerHTML = '<p>No visits found.</p>';
+            container.textContent = "No visits found.";
         }
-        
     } catch (error) {
-        console.error('Error loading recent visits:', error);
-        container.innerHTML = `
-            <div class="status error">
-                <span>❌</span>
-                <span>Error loading visits: ${error.message}</span>
-            </div>
-        `;
+        container.textContent = "❌ Failed to fetch recent visits: " + error.message;
     }
 }
-
 // Main function to execute when page loads
 async function initializeTracking() {
     try {
@@ -226,4 +198,29 @@ async function initializeTracking() {
 window.addEventListener('load', initializeTracking);
 
 // Also execute when DOM is ready (fallback)
-document.addEventListener('DOMContentLoaded', initializeTracking);
+// Modify the main initialization
+document.addEventListener('DOMContentLoaded', async function() {
+    if (visitTracked) return; // Prevent duplicate tracking
+    
+    try {
+        console.log('🔍 Starting visit tracking...');
+        
+        // Capture visit data
+        const data = captureVisitData();
+        
+        // Update UI first
+        updateUI(data);
+        
+        // Send to backend only once
+        await sendToBackend(data);
+        visitTracked = true; // Set flag after successful tracking
+        
+    } catch (error) {
+        console.error('❌ Error during initialization:', error);
+        const statusElement = document.getElementById('status');
+        if (statusElement) {
+            statusElement.textContent = `❌ Initialization error: ${error.message}`;
+            statusElement.className = 'status error';
+        }
+    }
+});
